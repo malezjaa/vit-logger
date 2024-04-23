@@ -11,6 +11,8 @@
 //! ## Usage
 //!
 //! ```rust
+//! use vit_logger::{Config, VitLogger};
+//! 
 //! fn main() {
 //!     std::env::set_var("RUST_LOG", "trace");
 //!     VitLogger::new().init(Config::builder());
@@ -23,9 +25,10 @@
 mod config;
 mod formatter;
 
+pub use config::{Config, ConfigBuilder};
+
 extern crate log;
 
-use crate::config::{Config, ConfigBuilder};
 use crate::formatter::Formatter;
 use log::{LevelFilter, Metadata, Record, SetLoggerError};
 
