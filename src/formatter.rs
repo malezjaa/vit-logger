@@ -25,6 +25,8 @@ pub struct Formatter {
     level: LevelFilter,
     message: String,
     config: Config,
+    file: Option<String>,
+    line: Option<u32>,
 }
 
 impl<'a> Formatter {
@@ -33,6 +35,8 @@ impl<'a> Formatter {
             level: record.level().to_level_filter(),
             message: record.args().to_string(),
             config,
+            file: record.file().map(|f| f.to_string()),
+            line: record.line(),
         }
     }
     pub fn format(&self) {
@@ -61,34 +65,26 @@ impl<'a> Formatter {
             )
         };
 
-        let full_path = Path::new(file!());
-        let project_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-
-        let project_name = project_dir.file_name().unwrap().to_str().unwrap();
-
-        let mut relative_path = format!(
-            "{}/{}",
-            project_name,
-            full_path.strip_prefix(project_dir).unwrap_or(full_path).display()
-        );
-
-        relative_path = relative_path.replace("\\", "/");
-
-        let location = if self.config.file && self.config.line {
-            format!(
-                " {}{}{}",
-                relative_path.dimmed(),
-                ":".dimmed(),
-                line!().to_string().dimmed()
-            )
-        } else if self.config.file {
-            format!(" {}", relative_path.dimmed())
-        } else if self.config.line {
-            format!(" {}", line!().to_string().dimmed())
+        let normalized_path = &self.file.as_deref().unwrap_or("").replace("\\", "/");
+        let line = if self.line.is_some() {
+            format!("{}{}", ":".dimmed(), self.line.unwrap().to_string().dimmed())
         } else {
             "".to_string()
         };
 
+        let location = if self.config.file && self.config.line {
+            format!(
+                " {}{}",
+                normalized_path.dimmed(),
+                line
+            )
+        } else if self.config.file {
+            format!(" {}", normalized_path.dimmed())
+        } else if self.config.line {
+            format!(" {}", line)
+        } else {
+            "".to_string()
+        };
 
         let line = format!("{}{location}{}", if self.config.time {
             format!("{}", time)
