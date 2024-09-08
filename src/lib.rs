@@ -12,10 +12,10 @@
 //!
 //! ```rust
 //! use vit_logger::{Config, VitLogger};
-//! 
+//!
 //! fn main() {
 //!     std::env::set_var("RUST_LOG", "trace");
-//!     VitLogger::new().init(Config::builder());
+//!     VitLogger::new().init(Config::builder().finish()?);
 //!     log::info!("Hello, world!");
 //! }
 //! ```
@@ -96,8 +96,8 @@ impl VitLogger {
     ///
     /// # Panics
     /// When the logger is called before init or another logger already was initialized.
-    pub fn init(&mut self, builder: ConfigBuilder) {
-        self.try_init(builder.0.clone())
+    pub fn init(&mut self, config: Config) {
+        self.try_init(config)
             .expect("Logger should not be called before init");
     }
 }

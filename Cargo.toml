@@ -1,6 +1,6 @@
 [package]
 name = "vit_logger"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors = ["malezjaa"]
 description = "Simple Rust logger"
@@ -9,8 +9,8 @@ repository = "https://github.com/malezjaa/vit-logger"
 readme = "README.md"
 
 [dependencies]
-log = { version = "0.4.21", features = ["std"] }
-colorized = "1.0.0"
-lazy_static = "1.4.0"
+log = { version = "0.4.22", features = ["std"] }
+colored = "2.1.0"
+lazy_static = "1.5.0"
 time = "0.3.36"
 chrono = "0.4.38"

@@ -1,11 +1,13 @@
-use colorized::{Color, Colors};
 use lazy_static::lazy_static;
 use log::{LevelFilter, Record};
 use std::collections::HashMap;
+use std::path::Path;
+
 extern crate chrono;
 
 use crate::config::Config;
 use chrono::Local;
+use colored::Colorize;
 
 lazy_static! {
     pub static ref TYPE_ICONS: HashMap<LevelFilter, &'static str> = {
@@ -34,18 +36,65 @@ impl<'a> Formatter {
         }
     }
     pub fn format(&self) {
-        let right = self.get_local_time().color(Colors::BlackFg);
+        let target = if self.config.target {
+            format!("{}{} ", env!("CARGO_PKG_NAME").dimmed(), ":".dimmed())
+        } else {
+            "".to_string()
+        };
+
+        let time = self.get_local_time().dimmed();
         let left = if self.config.badge {
-            format!("{} {}", self.get_badge(), self.message)
+            format!(" {} {target}{}", self.get_badge(), self.message)
+        } else if self.config.icon {
+            format!(
+                " {} {target}{}",
+                self.colorize(self.get_icon(self.level)),
+                self.message
+            )
+        } else if self.config.text {
+            format!(" {} {target}{}", self.colorize(&self.level.to_string().to_lowercase()), self.message)
         } else {
             format!(
-                "{} {}",
+                " {} {target}{}",
                 self.colorize(self.get_icon(self.level)),
                 self.message
             )
         };
 
-        let line = format!("{} {}", right, left);
+        let full_path = Path::new(file!());
+        let project_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+
+        let project_name = project_dir.file_name().unwrap().to_str().unwrap();
+
+        let mut relative_path = format!(
+            "{}/{}",
+            project_name,
+            full_path.strip_prefix(project_dir).unwrap_or(full_path).display()
+        );
+
+        relative_path = relative_path.replace("\\", "/");
+
+        let location = if self.config.file && self.config.line {
+            format!(
+                " {}{}{}",
+                relative_path.dimmed(),
+                ":".dimmed(),
+                line!().to_string().dimmed()
+            )
+        } else if self.config.file {
+            format!(" {}", relative_path.dimmed())
+        } else if self.config.line {
+            format!(" {}", line!().to_string().dimmed())
+        } else {
+            "".to_string()
+        };
+
+
+        let line = format!("{}{location}{}", if self.config.time {
+            format!("{}", time)
+        } else {
+            "".to_string()
+        }, left);
 
         if self.config.badge {
             println!("\n{}\n", line);
@@ -58,25 +107,25 @@ impl<'a> Formatter {
         TYPE_ICONS.get(&level).unwrap_or(&"")
     }
 
-    pub fn colorize(&self, msg: &str) -> String {
+    pub fn colorize(&self, msg: &str) -> colored::ColoredString {
         match self.level {
-            LevelFilter::Off => msg.color(Colors::RedFg),
-            LevelFilter::Error => msg.color(Colors::RedFg),
-            LevelFilter::Warn => msg.color(Colors::YellowFg),
-            LevelFilter::Info => msg.color(Colors::CyanFg),
-            LevelFilter::Debug => msg.color(Colors::GreenFg),
-            LevelFilter::Trace => msg.color(Colors::MagentaFg),
+            LevelFilter::Off => msg.red(),
+            LevelFilter::Error => msg.bright_red(),
+            LevelFilter::Warn => msg.yellow(),
+            LevelFilter::Info => msg.bright_cyan(),
+            LevelFilter::Debug => msg.green(),
+            LevelFilter::Trace => msg.bright_magenta(),
         }
     }
 
-    pub fn colorize_badge(&self, msg: &str) -> String {
+    pub fn colorize_badge(&self, msg: &str) -> colored::ColoredString {
         match self.level {
-            LevelFilter::Off => msg.color(Colors::RedBg),
-            LevelFilter::Error => msg.color(Colors::RedBg),
-            LevelFilter::Warn => msg.color(Colors::YellowBg),
-            LevelFilter::Info => msg.color(Colors::CyanBg),
-            LevelFilter::Debug => msg.color(Colors::GreenBg),
-            LevelFilter::Trace => msg.color(Colors::MagentaBg),
+            LevelFilter::Off => msg.on_red(),
+            LevelFilter::Error => msg.on_bright_red(),
+            LevelFilter::Warn => msg.on_yellow(),
+            LevelFilter::Info => msg.on_bright_cyan(),
+            LevelFilter::Debug => msg.on_green(),
+            LevelFilter::Trace => msg.on_bright_magenta(),
         }
     }
 
@@ -96,7 +145,7 @@ impl<'a> Formatter {
         };
 
         self.colorize_badge(&level_name.to_uppercase())
-            .color(Colors::BlackFg)
+            .black()
             .to_string()
     }
 }
