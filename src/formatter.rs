@@ -48,18 +48,18 @@ impl<'a> Formatter {
 
         let time = self.get_local_time().dimmed();
         let left = if self.config.badge {
-            format!(" {} {target}{}", self.get_badge(), self.message)
+            format!("{} {target}{}", self.get_badge(), self.message)
         } else if self.config.icon {
             format!(
-                " {} {target}{}",
+                "{} {target}{}",
                 self.colorize(self.get_icon(self.level)),
                 self.message
             )
         } else if self.config.text {
-            format!(" {} {target}{}", self.colorize(&self.level.to_string().to_lowercase()), self.message)
+            format!("{} {target}{}", self.colorize(&self.level.to_string().to_lowercase()), self.message)
         } else {
             format!(
-                " {} {target}{}",
+                "{} {target}{}",
                 self.colorize(self.get_icon(self.level)),
                 self.message
             )
@@ -74,22 +74,26 @@ impl<'a> Formatter {
 
         let location = if self.config.file && self.config.line {
             format!(
-                " {}{}",
+                "{}{}",
                 normalized_path.dimmed(),
                 line
             )
         } else if self.config.file {
-            format!(" {}", normalized_path.dimmed())
+            format!("{}", normalized_path.dimmed())
         } else if self.config.line {
-            format!(" {}", line)
+            format!("{}", line)
         } else {
             "".to_string()
         };
 
-        let line = format!("{}{location}{}", if self.config.time {
-            format!("{}", time)
+        let line = format!("{}{}{}", if self.config.time {
+            format!(" {} ", time)
         } else {
             "".to_string()
+        }, if location.is_empty() {
+            "".to_string()
+        } else {
+            format!("{} ", location)
         }, left);
 
         if self.config.badge {
